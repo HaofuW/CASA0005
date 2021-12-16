@@ -51,11 +51,15 @@ qtm(NYDistricts)
 library(tidyverse)
 library(janitor)
 
-Evictions <- read_csv("Evictions.csv")
+Evictions <- read_csv(here::here("Evictions.csv"),
+                      na = c("", "NA", "n/a"), 
+                      locale = locale(encoding = 'Latin1'), 
+                      col_names = TRUE) %>% 
+  na.omit(Evictions)
 
-NewEvictions <- na.omit(Evictions)
+#NewEvictions <- na.omit(Evictions)
 
-NewEvictions <- NewEvictions %>% 
+NewEvictions <- Evictions %>% 
   st_as_sf(., coords = c("Longitude","Latitude"),
            crs = 4326) %>%
   st_transform(., 32618) %>% 
