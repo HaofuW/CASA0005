@@ -1,0 +1,574 @@
+---
+title: "Name: Andy MacLachlan"
+author: 
+- |
+    | Student number: TEST
+date: "`r format(Sys.time(), '%X, %d %B, %Y')`"
+output: html_document
+---
+
+# Originality declaration
+
+I, \[**insert your name**\], confirm that the work presented in this assessment is my own. Where information has been derived from other sources, I confirm that this has been indicated in the work.
+
+date: `r format(Sys.time(), '%d %B, %Y')`
+
+# Start your response here
+
+## Initial project scope
+
+## The codes are as follow:
+
+```{r}
+# load the package
+library(spatstat)
+library(here)
+library(sp)
+library(rgeos)
+library(maptools)
+library(GISTools)
+library(tmap)
+library(sf)
+library(geojson)
+library(geojsonio)
+library(tmaptools)
+```
+
+## Set up the data
+
+```{r}
+# first, get the Boundaries of Community Districts in New York City
+NYDistricts <- st_read(here::here("Community Districts", "geo_export_3ed95fd1-bcd5-42fd-8e67-cf62e9e8398b.shp")) %>% 
+  st_transform(., 32618)
+
+NYDistricts
+
+qtm(NYDistricts)
+```
+
+```{r}
+# Now lets get the location of the evictions
+library(tidyverse)
+library(janitor)
+
+Evictions <- read_csv("Evictions.csv")
+
+NewEvictions <- na.omit(Evictions)
+
+NewEvictions <- NewEvictions %>% 
+  st_as_sf(., coords = c("Longitude","Latitude"),
+           crs = 4326) %>%
+  st_transform(., 32618) %>% 
+  clean_names()
+
+summary(NewEvictions)
+```
+
+```{r}
+#plot the evictions in the city
+tmap_mode("plot")
+```
+
+```{r}
+tm_shape(NYDistricts) +
+  tm_polygons(col = NA, alpha = 0.5) +
+tm_shape(NewEvictions) +
+  tm_dots(col = "blue")
+```
+
+This part of R might not useful.
+
+```{r}
+# join the New York District data and eviction data
+#Joinfun <- function(data1, data2){
+
+#output<- data1%>%
+#  st_join(NYDistricts,.)%>%
+#   add_count(boro_cd, name="eviction-borough") 
+
+#  return(output)
+#}
+
+#NYEvictions <- Joinfun(NewEvictions, NYDistricts)
+
+#NYEvictions
+```
+
+#### Data cleaning
+
+This two part cannot be loaded.
+
+```{r}
+#remove duplicates
+#library(tidyverse)
+
+#library(sf)
+#NYEvictions <- distinct(NYEvictions)
+```
+
+#### Spatial subsetting
+
+```{r}
+#NYEvictionsSub <- NYEvictions[NYDistricts,]
+#check to see that they've been removed
+#tmap_mode("plot")
+#tm_shape(NYDistricts) +
+#  tm_polygons(col = NA, alpha = 0.5) +
+#tm_shape(NYEvictionsSub) +
+#  tm_dots(col = "blue")
+```
+
+Try only extract one district
+
+```{r}
+#extract the district
+
+CD502 <- NYDistricts %>%
+  filter(., boro_cd == 502)
+
+#Check to see that the correct borough has been pulled out
+tm_shape(CD502) +
+  tm_polygons(col = NA, alpha = 0.5)
+
+summary(CD502)
+```
+
+Clip the eviction data to the single borough
+
+```{r}
+#clip the data to our single borough
+NewEvictionsCD <- NewEvictions[CD502,]
+
+```
+
+```{r}
+#check that it's worked
+tmap_mode("plot")
+
+tm_shape(CD502) +
+  tm_polygons(col = NA, alpha = 0.5) +
+tm_shape(NewEvictionsCD) +
+  tm_dots(col = "blue")
+```
+
+The first thing we need to do is create an observation window for to carry out its analysis within --- we'll set this to the extent of the CD503 boundary
+
+```{r}
+#now set a window as the borough boundary
+window <- as.owin(CD502)
+plot(window)
+```
+
+To use spatstat, we need point pattern analysis, we need to create a point pattern (ppp) object.
+
+```{r}
+#create a sp object
+NewEvictionsCD <- NewEvictionsCD %>%
+  as(., 'Spatial')
+#create a ppp object
+NewEvictionsCD.ppp <- ppp(x = NewEvictionsCD@coords[,1],
+                        y = NewEvictionsCD@coords[,2],
+                          window=window)
+```
+
+```{r}
+# just to check
+NewEvictionsCD@coords[,1]
+```
+
+```{r}
+# check the new ppp object
+NewEvictionsCD.ppp %>%
+  plot(.,pch=16,cex=0.5, 
+       main="Evictions in CD502")
+```
+
+## Data Analysis
+
+#### Kernel Density Estimation
+The size and shape of the Kernel affects the density pattern produced
+```{r}
+NewEvictionsCD.ppp %>%
+  density(., sigma = 500) %>%
+  plot()
+```
+
+#### Ripley’s K
+```{r}
+K <- NewEvictionsCD.ppp %>%
+  Kest(., correction="border") %>%
+  plot()
+```
+```{r}
+Kval <- as.data.frame(Kest(NewEvictionsCD.ppp, correction = "border"))
+
+Kval
+```
+There are a lot of elements i the plot of K that can be explained. First, the Kpois(r) line in Red is the theoretical value of K for each distance window (r) under a Poisson assumption of Complete Spatial Randomness.[Practical book] The Black line is the estimated values of K accounting for the effects of the edge of the study area.[Practical book]
+
+(Here, the correction specifies how points towards the edge are dealt with, in this case, border means that points towards the edge are ignored for the calculation but are included for the central points.)
+
+If the value of K falls above the line, it means that there is cluster of the data at the distance. If the value of K is below the line, there shows a dispersion of the data. From the graph, we can see that up until distances of around 2000 metres, the location of the eviction seems to be clustered in Harrow. (however, at around 1500 m, the distribution appears random and then dispersed between about 1600 and 2100 metres.)
+
+
+#### Density-based spatial clustering of applications with noise: DBSCAN
+```{r}
+# Load the package
+library(raster)
+library(fpc)
+```
+```{r}
+#first check the coordinate reference system of the CD502 spatial polygon:
+st_geometry(NYDistricts)
+```
+
+DBSCAN requires to input two parameters: 1. Epsilon - this is the radius within which the algorithm with search for clusters 2. MinPts - this is the minimum number of points that should be considered a cluster
+
+Based on the results of the Ripley's K analysis earlier, we can see that we are getting clustering up to a radius of around 2000m, with the largest bulge in the graph at around 1700m. Therefore, 1700m is probably a good place to start and we will begin by searching for clusters of at least 4 points…
+```{r}
+#first extract the points from the spatial points data frame
+NewEvictionsCDPoints <- NewEvictionsCD %>%
+  coordinates(.)%>%
+  as.data.frame()
+
+#now run the dbscan analysis
+db <- NewEvictionsCDPoints %>%
+  fpc::dbscan(.,eps = 800, MinPts = 6)
+
+#now plot the result
+plot(db, NewEvictionsCDPoints, main = "DBSCAN Output", frame = F)
+plot(NYDistricts$geometry, add=T)
+```
+
+Use kNNdistplot() to find a suitable eps value based on the ‘knee’ in the plot…
+```{r}
+# k is no of nearest neighbours used, use min points
+library(dbscan)
+
+NewEvictionsCDPoints%>%
+  dbscan::kNNdistplot(.,k=6)
+```
+https://www.datanovia.com/en/lessons/dbscan-density-based-clustering-essentials/
+
+Advanced DBSCAN
+```{r}
+library(ggplot2)
+```
+
+```{r}
+db
+```
+
+```{r}
+db$cluster
+```
+
+```{r}
+# add this cluster membership info back into our dataframe
+NewEvictionsCDPoints <- NewEvictionsCDPoints %>%
+  mutate(dbcluster=db$cluster)
+```
+
+```{r}
+# Next we are going to create some convex hull polygons to wrap around the points in our clusters.
+chulls <- NewEvictionsCDPoints %>%
+  group_by(dbcluster) %>%
+  dplyr::mutate(hull = 1:n(),
+  hull = factor(hull, chull(coords.x1, coords.x2)))%>%
+  arrange(hull)
+
+#chulls2 <- ddply(BluePlaquesSubPoints, .(dbcluster), 
+              #  function(df) df[chull(df$coords.x1, df$coords.x2), ])
+```
+
+```{r}
+# As 0 isn’t actually a cluster (it’s all points that aren’t in a cluster) drop it from the dataframe
+chulls <- chulls %>%
+  filter(dbcluster >=1)
+```
+
+```{r}
+# ggplot
+dbplot <- ggplot(data = NewEvictionsCDPoints, 
+                 aes(coords.x1,coords.x2, colour=dbcluster, fill=dbcluster)) 
+#add the points in
+dbplot <- dbplot + geom_point()
+#now the convex hulls
+dbplot <- dbplot + geom_polygon(data = chulls, 
+                                aes(coords.x1,coords.x2, group=dbcluster), 
+                                alpha = 0.5) 
+#now plot, setting the coordinates to scale correctly and as a black and white plot 
+#(just for the hell of it)...
+dbplot + theme_bw() + coord_equal()
+```
+
+Nicer way of DBSCAN
+```{r}
+#convex hulls to wrap around points
+chulls2 <- data.frame()
+for (cluster in 1:max(NewEvictionsCDPoints$dbcluster)) {
+  cluster_data <- NewEvictionsCDPoints %>%
+    filter(dbcluster == cluster)
+  ch <- chull(cluster_data$coords.x1, cluster_data$coords.x2)
+  chulls2 <- chulls2 %>%
+    bind_rows(cluster_data[c(ch), ])
+}
+
+# ggplot
+dbplot <- ggplot(data = NewEvictionsCDPoints, 
+                 aes(coords.x1,coords.x2, colour=dbcluster, fill=dbcluster)) 
+#add the points in
+dbplot <- dbplot + geom_point()
+#now the convex hulls
+dbplot <- dbplot + geom_polygon(data = chulls2, 
+                                aes(coords.x1,coords.x2, group=dbcluster), 
+                                alpha = 0.5) 
+#now plot, setting the coordinates to scale correctly and as a black and white plot 
+#(just for the hell of it)...
+dbplot + theme_bw() + coord_equal()
+```
+
+#### Moran's I and Spatial Autocorrelation
+```{r}
+library(here)
+library(janitor)
+library(dplyr)
+```
+
+```{r}
+# join the New York District data and eviction data
+#Joinfun <- function(data1, data2){
+
+#output<- data1%>%
+#  st_join(NYDistricts,.)%>%
+#   add_count(boro_cd, name="eviction-borough") 
+
+#  return(output)
+#}
+
+#NYEvictions <- Joinfun(NewEvictions, NYDistricts)
+
+#NYEvictions
+```
+
+
+```{r}
+#summary(NYEvictions)
+```
+
+```{r}
+#NewEvictions <- NewEvictions[NYEvictions,]
+
+#tm_shape(NYDistricts) +
+#  tm_polygons(col = NA, alpha = 0.5) +
+#tm_shape(NYEvictions) +
+#  tm_dots(col = "blue")
+```
+
+```{r}
+library(sf)
+points_sf_joined <- NYDistricts %>%
+  st_join(NewEvictions) %>%
+  add_count(boro_cd) %>%
+  janitor::clean_names() %>%
+  #calculate area
+  mutate(area=st_area(.)) %>%
+  #then density of the points per ward
+  mutate(density=n/area) %>%
+  #select density and some other variables 
+  dplyr::select(density, boro_cd, n)
+```
+
+```{r}
+points_sf_joined <- points_sf_joined %>%                    
+  group_by(boro_cd) %>%         
+  summarise(density = first(density),
+          boro_cd = first(boro_cd),
+          plaquecount= first(n))
+
+tm_shape(points_sf_joined) +
+    tm_polygons("density",
+        style="jenks",
+        palette="PuOr",
+        midpoint=NA,
+        popup.vars=c("boro_cd", "density"),
+        title="Evictions Density")
+```
+So, from the map, it looks as though we might have some clustering of blue plaques in the Manhatten so let’s check this with Moran’s I and some other statistics.
+
+Before being able to calculate Moran’s I and any similar statistics, we need to first define a  W_ij spatial weights matrix.
+```{r}
+library(spdep)
+```
+```{r}
+#First calculate the centroids of all Wards in New York City
+
+coordsW <- points_sf_joined%>%
+  st_centroid()%>%
+  st_geometry()
+  
+plot(coordsW,axes=TRUE)
+```
+```{r}
+#create a neighbours list
+LWard_nb <- points_sf_joined %>%
+  poly2nb(., queen=T)
+```
+
+```{r}
+summary(LWard_nb)
+```
+Average number of links is 4.422535
+
+```{r}
+#plot the neighbours
+plot(LWard_nb, st_geometry(coordsW), col="red")
+#add a map underneath
+plot(points_sf_joined$geometry, add=T)
+```
+
+```{r}
+#create a spatial weights matrix from these weights
+#Lward.lw <- LWard_nb %>%
+#  nb2mat(., style="B")
+
+#sum(Lward.lw)
+#summary(Lward.lw)
+```
+
+#### Spatial autocorrelation
+
+##### Moran's I
+
+Now we have defined our W_ij matrix, we can calculate the Moran’s I and other associated statistics. However, Moran’s I requires a spatial weight list type object as opposed to matrix.
+```{r}
+Lward.lw <- LWard_nb %>%
+  nb2listw(., style="C")
+```
+
+Moran’s I test tells us whether we have clustered values (close to 1) or dispersed values (close to -1)
+
+```{r}
+I_LWard_Global_Density <- points_sf_joined %>%
+  pull(density) %>%
+  as.vector()%>%
+  moran.test(., Lward.lw)
+
+I_LWard_Global_Density
+```
+
+##### Geary’s C
+This tells us whether similar values or dissimilar values are clustering
+```{r}
+C_LWard_Global_Density <- 
+  points_sf_joined %>%
+  pull(density) %>%
+  as.vector()%>%
+  geary.test(., Lward.lw)
+
+C_LWard_Global_Density
+```
+
+
+##### Getis Ord General G
+This tells us whether high or low values are clustering. If G > Expected = High values clustering; if G < expected = low values clustering
+```{r}
+G_LWard_Global_Density <- 
+  points_sf_joined %>%
+  pull(density) %>%
+  as.vector()%>%
+  globalG.test(., Lward.lw)
+
+G_LWard_Global_Density
+```
+
+So the global statistics are indicating that we have spatial autocorrelation of Blue Plaques in London:
+
+The Moran’s I statistic = 0.59 (remember 1 = clustered, 0 = no pattern, -1 = dispersed) which shows that we have some distinctive clustering
+
+The Geary’s C statistic = 0.46 (remember Geary’s C falls between 0 and 2; 1 means no spatial autocorrelation, <1 - positive spatial autocorrelation or similar values clustering, >1 - negative spatial autocorreation or dissimilar values clustering) which shows that similar values are clustering
+
+The General G statistic = G > expected, so high values are tending to cluster.
+
+
+We can now also calculate local versions of the Moran’s I statistic (for each Ward) and a Getis Ord G*_i statistic to see where we have hot-spots…
+```{r}
+#use the localmoran function to generate I for each ward in the city
+
+I_LWard_Local_count <- points_sf_joined %>%
+  pull(plaquecount) %>%
+  as.vector()%>%
+  localmoran(., Lward.lw)%>%
+  as_tibble()
+
+I_LWard_Local_Density <- points_sf_joined %>%
+  pull(density) %>%
+  as.vector()%>%
+  localmoran(., Lward.lw)%>%
+  as_tibble()
+
+#what does the output (the localMoran object) look like?
+slice_head(I_LWard_Local_Density, n=5)
+```
+
+```{r}
+points_sf_joined <- points_sf_joined %>%
+  mutate(plaque_count_I = as.numeric(I_LWard_Local_count$Ii))%>%
+  mutate(plaque_count_Iz =as.numeric(I_LWard_Local_count$Z.Ii))%>%
+  mutate(density_I =as.numeric(I_LWard_Local_Density$Ii))%>%
+  mutate(density_Iz =as.numeric(I_LWard_Local_Density$Z.Ii))
+```
+
+##### Mapping outputs
+
+We'll set the breaks manually based on the rule that data points >2.58 or <-2.58 standard deviations away from the mean are significant at the 99% level (<1% chance that autocorrelation not present); >1.96 - <2.58 or <-1.96 to >-2.58 standard deviations are significant at the 95% level (<5% change that autocorrelation not present).
+```{r}
+breaks1<-c(-1000,-2.58,-1.96,-1.65,1.65,1.96,2.58,1000)
+```
+
+```{r}
+MoranColours<- rev(brewer.pal(8, "RdGy"))
+```
+
+```{r}
+tm_shape(points_sf_joined) +
+    tm_polygons("plaque_count_Iz",
+        style="fixed",
+        breaks=breaks1,
+        palette=MoranColours,
+        midpoint=NA,
+        title="Local Moran's I, Blue Plaques in London")
+```
+This map shows some areas in the centre of London that have relatively high scores, indicating areas with lots of blue plaques neighbouring other areas with lots of blue plaques.
+
+the Getis Ord G*_i statisic for hot and cold spots
+```{r}
+Gi_LWard_Local_Density <- points_sf_joined %>%
+  pull(density) %>%
+  as.vector()%>%
+  localG(., Lward.lw)
+
+head(Gi_LWard_Local_Density)
+```
+
+```{r}
+points_sf_joined <- points_sf_joined %>%
+  mutate(density_G = as.numeric(Gi_LWard_Local_Density))
+```
+
+```{r}
+GIColours<- rev(brewer.pal(8, "RdBu"))
+
+#now plot on an interactive map
+tm_shape(points_sf_joined) +
+    tm_polygons("density_G",
+        style="fixed",
+        breaks=breaks1,
+        palette=GIColours,
+        midpoint=NA,
+        title="Gi*, Blue Plaques in London")
+```
+#### Other variables can be checked in the csv file.
+
+
+## Other Analysis Methods
