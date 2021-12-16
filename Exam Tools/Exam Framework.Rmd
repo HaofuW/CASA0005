@@ -1,0 +1,94 @@
+---
+title: "Name: Haofu Wang"
+author: 
+- |
+    | Student number: 21112657
+date: "`r format(Sys.time(), '%X, %d %B, %Y')`"
+output: html_document
+---
+
+# Originality declaration
+
+I, \[**insert your name**\], confirm that the work presented in this assessment is my own. Where information has been derived from other sources, I confirm that this has been indicated in the work.
+
+date: `r format(Sys.time(), '%d %B, %Y')`
+
+# Start your response here
+
+# 1. Initial project scope
+
+Introduction part (Bullet Points)
+
+-   The reason why I choose this question
+
+-   The main dataset for the analysis is ... (describe the data source)
+
+-   Introduce the data scale. (It is a very large dataset, with around 66,000 rows, where each row represents an eviction with columns holding information such as the date executed, ejectment (possession or eviction), and spatial unit data such as community district and census tract.)
+
+-   A brief intro of the data wangling and analysis. This may include research questions or hypotheses.
+
+-   Identify the limitations and constrains of the dataset. It could be the spatial or temporal limitations.
+
+-   Require 10-15 bullet points. Check the Week 10 lecture notes.
+
+# 2. Research Questions and Hypothesis
+
+# 3. Set Up the Data
+
+## 3.1 Read in Data
+
+### 3.1.1 Load shapefile
+
+### 3.1.2 Load csv
+
+### 3.1.3 Transforming Data
+
+projecting, making csv to a sf object etc.
+
+## 3.2 Wrangling Data
+
+### 3.2.1 Join data
+
+### 3.2.2 select or filter columns
+
+### 3.2.3 Data Cleaning
+
+# 4. Analysis
+
+## 4.1 Basic Analysis
+
+### 4.1.1 柱状图
+
+### 4.1.2 Map
+
+## 4.2 Point Pattern Analysis (FOR SMALL AREA (HARROW))
+
+### 4.2.1 Preparing Data for Analysis
+
+### 4.2.2 Kernel Density Estimation
+
+### 4.2.3 Ripley's K
+
+## 4.3 DBSCAN (FOR SMALL AREA (HARROW))
+
+## 4.4 Spatial Autocorrelation
+
+### 4.4.1 Preparing Data for Analysis
+
+## 4.5 Multiple Linear Regression
+
+### 4.5.1 Preparing Data for Analysis
+
+### 4.5.2 Basic Regression (散点图)
+
+### 4.5.3 Assumption 1 - There is a linear relationship between the dependent and independent variables
+
+### 4.5.4 Assumption 2 - The residuals in your model should be normally distributed
+
+### 4.5.5 Assumption 3 - No Multicolinearity in the independent variables
+
+### 4.5.6 Assumption 4 - Homoscedasticity
+
+### 4.5.7 Assumption 5 - Independence of Errors
+
+# 5. Conclusions
