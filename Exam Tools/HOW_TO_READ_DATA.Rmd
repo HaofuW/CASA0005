@@ -1,0 +1,162 @@
+# How to read data
+
+## Packages
+
+```{r}
+library(spatstat)
+library(here)
+library(sp)
+library(rgeos)
+library(maptools)
+library(GISTools)
+library(tmap)
+library(sf)
+library(geojson)
+library(geojsonio)
+library(tmaptools)
+library(tidyverse)
+library(stringr)
+library(janitor)
+library(raster)
+library(fpc)
+library(dplyr)
+library(spdep)
+
+```
+
+## shp （包括筛选数据）
+
+```{r}
+LondonBoroughs <- st_read(here::here("Prac1_data", "statistical-gis-boundaries-london", "ESRI", "London_Borough_Excluding_MHW.shp"))
+
+BoroughMap <- LondonBoroughs %>%
+  # 从GSS CODE筛选E09伦敦范围内的数据
+  dplyr::filter(str_detect(GSS_CODE, "^E09"))%>%
+  st_transform(., 27700)
+
+qtm(BoroughMap)
+summary(BoroughMap)
+```
+
+```{r}
+OSM <- st_read(here::here("prac5_data",
+                          "greater-london-latest-free.shp", 
+                          "gis_osm_pois_a_free_1.shp")) %>%
+  st_transform(., 27700) %>%
+  # select hotels only
+  filter(fclass == 'hotel')
+```
+
+## csv
+
+```{r}
+BluePlaques <- st_read(here::here("prac6_data",
+                                  "open-plaques-london-2018-04-08.geojson")) %>%
+  st_transform(.,27700)
+
+summary(BluePlaques)
+```
+
+### 如果csv出现坐标
+
+```{r}
+library(tidyverse)
+library(janitor)
+
+Evictions <- read_csv(here::here("Evictions.csv"),
+                      na = c("", "NA", "n/a"), 
+                      locale = locale(encoding = 'Latin1'), 
+                      col_names = TRUE) %>% 
+  na.omit(Evictions)
+
+#NewEvictions <- na.omit(Evictions)
+
+#select entire places that are available all year
+Evictions <- filter(room_type == 'Entire home/apt' & availability_365 =='365')
+
+NewEvictions <- Evictions %>% 
+  st_as_sf(., coords = c("Longitude","Latitude"),
+           crs = 4326) %>%
+  st_transform(., 32618) %>% 
+  clean_names()
+
+summary(NewEvictions)
+```
+
+如果下载之后是zip，需要解释我们的csv/shp是解压zip之后得出的
+
+## 快速将shp和csv结合画图
+
+```{r}
+#plot the blue plaques in the city
+tmap_mode("plot")
+```
+
+```{r}
+tm_shape(BoroughMap) +
+  tm_polygons(col = NA, alpha = 0.5) +
+tm_shape(BluePlaques) +
+  tm_dots(col = "blue")
+```
+
+## 合并数据
+
+```{r}
+left_join
+```
+
+```{r}
+st_join
+```
+
+```{r}
+# join the New York District data and eviction data
+Joinfun <- function(data1, data2){
+output<- data1%>%
+  st_join(NYDistricts,.)%>%
+   add_count(boro_cd, name="eviction-borough") 
+  return(output)
+}
+NYEvictions <- Joinfun(NewEvictions, NYDistricts)
+NYEvictions
+
+######################################释例
+Joinfun <- function(data1, data2){
+
+output<- data1%>%
+  st_join(Londonborough,.)%>%
+  add_count(GSS_CODE, name="hotels_in_borough") 
+
+  return(output)
+}
+
+# use the function for hotels
+Hotels <- Joinfun(OSM, Londonborough)
+
+# then for airbnb
+Airbnb <- Joinfun(Airbnb, Londonborough))
+```
+
+## 数据清洗
+
+清除重复值
+
+```{r}
+#remove duplicates
+library(tidyverse)
+
+library(sf)
+BluePlaques <- distinct(BluePlaques)
+```
+
+选择伦敦内的蓝色牌匾数据
+
+```{r}
+BluePlaquesSub <- BluePlaques[BoroughMap,]
+#check to see that they've been removed
+tmap_mode("plot")
+tm_shape(BoroughMap) +
+  tm_polygons(col = NA, alpha = 0.5) +
+tm_shape(BluePlaquesSub) +
+  tm_dots(col = "blue")
+```

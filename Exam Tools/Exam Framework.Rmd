@@ -17,6 +17,12 @@ date: `r format(Sys.time(), '%d %B, %Y')`
 
 # 1. Research Questions and Hypothesis
 
+Q：Is there any relationship between a and b
+
+H0 (Null Hypothesis): a and b has no relationship
+
+H1 (Alternative Hypothesis): a and b has relationship
+
 # 2. Initial project scope
 
 Introduction part (Bullet Points)
