@@ -15,9 +15,13 @@ date: `r format(Sys.time(), '%d %B, %Y')`
 
 # Start your response here
 
-# 1. Initial project scope
+# 1. Research Questions and Hypothesis
+
+# 2. Initial project scope
 
 Introduction part (Bullet Points)
+
+-   Research Questions and Hypothesis
 
 -   The reason why I choose this question
 
@@ -30,8 +34,6 @@ Introduction part (Bullet Points)
 -   Identify the limitations and constrains of the dataset. It could be the spatial or temporal limitations.
 
 -   Require 10-15 bullet points. Check the Week 10 lecture notes.
-
-# 2. Research Questions and Hypothesis
 
 # 3. Set Up the Data
 
@@ -91,4 +93,20 @@ projecting, making csv to a sf object etc.
 
 ### 4.5.7 Assumption 5 - Independence of Errors
 
-# 5. Conclusions
+# 5. Reflections (Conclusions) (1-3 Paragraphs)
+
+-   The data I used -bias
+
+-   The analysis I have applied (was it appropraite)
+
+-   does it answer the research question/ hypothesis
+
+-   if not, how not
+
+-   what else could be considered
+
+-   Assumptions that have been made
+
+-   Definition of concepts
+
+-   How could someone use this (be specific). How can this project help them.
