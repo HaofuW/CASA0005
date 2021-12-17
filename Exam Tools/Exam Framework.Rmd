@@ -112,7 +112,9 @@ projecting, making csv to a sf object etc.
 
 ### 4.5.8 Dealing with Spatially Autocorrelated Residuals - Spatial Lag and Spatial Error models （处理残差值的空间自相关，但是时间不允许）（7.6.11可用在limitation）（同样的还有GWR，可使分析更完整？）
 
-# 5. Reflections (Conclusions) (1-3 Paragraphs)
+# 5. Outputs (final maps/plots) + explanation of what they are
+
+# 6. Reflections (Conclusions) (1-3 Paragraphs)
 
 -   The data I used -bias
 
