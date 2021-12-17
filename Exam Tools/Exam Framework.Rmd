@@ -63,9 +63,9 @@ projecting, making csv to a sf object etc.
 
 # 4. Analysis
 
-## 4.1 Basic Analysis
+## 4.1 Basic Analysis（Descriptive statistics）
 
-### 4.1.1 柱状图
+### 4.1.1 柱状图（可跳过）
 
 ### 4.1.2 Map
 
@@ -79,11 +79,11 @@ projecting, making csv to a sf object etc.
 
 ## 4.3 DBSCAN (FOR SMALL AREA (HARROW))
 
-## 4.4 Spatial Autocorrelation
+## 4.4 Spatial Autocorrelation 空间自相关
 
 ### 4.4.1 Preparing Data for Analysis
 
-## 4.5 Multiple Linear Regression
+## 4.5 Linear Regression
 
 ### 4.5.1 Preparing Data for Analysis
 

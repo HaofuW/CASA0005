@@ -1,0 +1,76 @@
+## 第五章画地图
+
+## NewYorkEvictionsCoords是csv读取坐标之后的数据
+## NewYorkward是shp文件
+
+```{r}
+library(tidyverse)
+library(sf)
+NewYorkEvictionsCoords <- distinct(NewYorkEvictionsCoords) # 删除重复值
+```
+
+```{r}
+Joinfun <- function(data1, data2){
+output<- data1%>%
+  st_join(NewYorkward,.)%>%
+  add_count(boro_cd, name="eviction-borough") 
+  return(output)
+}
+```
+
+
+```{r}
+NewYorkEvictionsCoords <- Joinfun(NewYorkEvictionsCoords,NewYorkward)
+```
+
+```{r}
+NewYorkEvictionsCoords_groupby <- NewYorkEvictionsCoords %>% 
+  group_by(.,boro_cd) %>%
+  summarise("Point sum" = unique(`eviction-borough`))
+```
+
+```{r}
+tm2 <- tm_shape(NewYorkEvictionsCoords_groupby)+
+  tm_polygons("Point sum",
+              palette="PuBu")+
+  tm_legend(show=FALSE)+
+  tm_layout(frame=FALSE)+
+  tm_credits("(a)",position = c(0,0.85,size=1.5))
+legend <- tm_shape(NewYorkEvictionsCoords_groupby) +
+    tm_polygons("Point sum",
+                palette="PuBu") +
+    tm_scale_bar(position=c(0.2,0.04), text.size=0.6)+
+    tm_compass(north=0, position=c(0.65,0.6))+
+    tm_layout(legend.only = TRUE, legend.position=c(0.2,0.25),asp=0.1)+
+    tm_credits("legend of New York", position=c(0.0,0.0))
+t=tmap_arrange( tm2, legend, ncol=2)
+t
+```
+
+
+```{r}
+NewYorkbb = st_bbox(NewYorkEvictionsCoords_groupby,
+                    crs = st_crs(NewYorkEvictionsCoords_groupby)) %>% 
+  st_as_sfc()
+```
+
+```{r}
+main <- tm_shape(NewYorkEvictionsCoords_groupby, bbbox = NewYorkbb) +
+  tm_polygons("Point sum",
+              palette = "PuBu") +
+  tm_scale_bar(position = c("left", "bottom", text.size = .75)) +
+  tm_layout(
+    legend.position = c("right", "top"),
+    legend.text.size = .75,
+    legend.title.size = 1.1,
+    frame = FALSE
+  ) +
+  tm_credits("(c)OpenstreeMap contrbutors and Airbnb", position = c(0.0, 0.0)) +
+  tm_compass(type = "8star", position = c(0.06, 0.1)) +
+  tm_layout(inner.margins = c(0.002, 0.002, 0.002, 0.2))
+main
+```
+```{r}
+tmap_mode("view")
+tm_shape(NewYorkEvictionsCoords_groupby) + 
+  tm_polygons("Point sum") 
