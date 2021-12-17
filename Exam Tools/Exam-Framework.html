@@ -165,7 +165,7 @@ pre code {
 
 <h1 class="title toc-ignore">Name: Haofu Wang</h1>
 <h4 class="author"><div class="line-block">Student number: 21112657</div></h4>
-<h4 class="date">20:39:23, 16 December, 2021</h4>
+<h4 class="date">01:33:57, 17 December, 2021</h4>
 
 </div>
 
@@ -173,7 +173,7 @@ pre code {
 <div id="originality-declaration" class="section level1">
 <h1>Originality declaration</h1>
 <p>I, <span class="math display">\[**insert your name**\]</span>, confirm that the work presented in this assessment is my own. Where information has been derived from other sources, I confirm that this has been indicated in the work.</p>
-<p>date: 16 December, 2021</p>
+<p>date: 17 December, 2021</p>
 </div>
 <div id="start-your-response-here" class="section level1">
 <h1>Start your response here</h1>
@@ -267,18 +267,35 @@ pre code {
 </div>
 <div id="assumption-1---there-is-a-linear-relationship-between-the-dependent-and-independent-variables" class="section level3">
 <h3>4.5.3 Assumption 1 - There is a linear relationship between the dependent and independent variables</h3>
+<ol style="list-style-type: decimal">
+<li>如果散点图画不出来，可以画频率分布图，如果频率分布图成正态分布，则说明两个变量存在一定程度的相关，很可能是线性相关。（7.5.6）（频率分布图可用两个变量分别对应任何变量画图（y = ..density..））</li>
+<li>使用symbox函数可得知对于坐标数据的最佳变换（log）</li>
+<li></li>
+</ol>
 </div>
 <div id="assumption-2---the-residuals-in-your-model-should-be-normally-distributed" class="section level3">
 <h3>4.5.4 Assumption 2 - The residuals in your model should be normally distributed</h3>
 </div>
 <div id="assumption-3---no-multicolinearity-in-the-independent-variables" class="section level3">
 <h3>4.5.5 Assumption 3 - No Multicolinearity in the independent variables</h3>
+<ol style="list-style-type: decimal">
+<li>将assump1中的呈正态分布的变量汇总在一起，查看与a1相比，R2是否有增长</li>
+<li>检查多重共线性先用相关系数矩阵</li>
+<li>VIF</li>
+</ol>
 </div>
 <div id="assumption-4---homoscedasticity" class="section level3">
 <h3>4.5.6 Assumption 4 - Homoscedasticity</h3>
 </div>
 <div id="assumption-5---independence-of-errors" class="section level3">
 <h3>4.5.7 Assumption 5 - Independence of Errors</h3>
+<ol style="list-style-type: decimal">
+<li>Durbin-Watson test statistics</li>
+<li>残差值的空间自相关</li>
+</ol>
+</div>
+<div id="dealing-with-spatially-autocorrelated-residuals---spatial-lag-and-spatial-error-models-处理残差值的空间自相关但是时间不允许7.6.11可用在limitation同样的还有gwr可使分析更完整" class="section level3">
+<h3>4.5.8 Dealing with Spatially Autocorrelated Residuals - Spatial Lag and Spatial Error models （处理残差值的空间自相关，但是时间不允许）（7.6.11可用在limitation）（同样的还有GWR，可使分析更完整？）</h3>
 </div>
 </div>
 </div>

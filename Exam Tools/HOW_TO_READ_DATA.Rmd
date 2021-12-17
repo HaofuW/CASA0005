@@ -6,6 +6,8 @@
 library(spatstat)
 library(here)
 library(sp)
+library(rgdal)
+library(broom)
 library(rgeos)
 library(maptools)
 library(GISTools)
@@ -21,7 +23,14 @@ library(raster)
 library(fpc)
 library(dplyr)
 library(spdep)
-
+library(plotly)
+library(mapview)
+library(crosstalk)
+library(spdep)
+library(car)
+library(fs)
+library(tidypredict)
+library(corrr)
 ```
 
 ## shp （包括筛选数据）
@@ -66,8 +75,13 @@ library(janitor)
 Evictions <- read_csv(here::here("Evictions.csv"),
                       na = c("", "NA", "n/a"), 
                       locale = locale(encoding = 'Latin1'), 
-                      col_names = TRUE) %>% 
-  na.omit(Evictions)
+                      col_names = TRUE)
+
+# 筛选2020年，以及排除坐标中的空值
+eviction2 <- eviction %>% 
+  dplyr::filter(str_detect(executed_date,"2020")) %>% 
+  dplyr::filter(latitude != 0) %>% 
+  dplyr::select(latitude,longitude,docket_number)
 
 #NewEvictions <- na.omit(Evictions)
 
@@ -83,7 +97,7 @@ NewEvictions <- Evictions %>%
 summary(NewEvictions)
 ```
 
-如果下载之后是zip，需要解释我们的csv/shp是解压zip之后得出的
+如果下载之后是zip，需要解释我们的csv/shp是在本地解压zip之后得出的
 
 ## 快速将shp和csv结合画图
 

@@ -91,13 +91,26 @@ projecting, making csv to a sf object etc.
 
 ### 4.5.3 Assumption 1 - There is a linear relationship between the dependent and independent variables
 
+1.  如果散点图画不出来，可以画频率分布图，如果频率分布图成正态分布，则说明两个变量存在一定程度的相关，很可能是线性相关。（7.5.6）（频率分布图可用两个变量分别对应任何变量画图（y = ..density..））
+2.  使用symbox函数可得知对于坐标数据的最佳变换（log）
+3.  
+
 ### 4.5.4 Assumption 2 - The residuals in your model should be normally distributed
 
 ### 4.5.5 Assumption 3 - No Multicolinearity in the independent variables
 
+1.  将assump1中的呈正态分布的变量汇总在一起，查看与a1相比，R2是否有增长
+2.  检查多重共线性先用相关系数矩阵
+3.  VIF
+
 ### 4.5.6 Assumption 4 - Homoscedasticity
 
 ### 4.5.7 Assumption 5 - Independence of Errors
+
+1.  Durbin-Watson test statistics
+2.  残差值的空间自相关
+
+### 4.5.8 Dealing with Spatially Autocorrelated Residuals - Spatial Lag and Spatial Error models （处理残差值的空间自相关，但是时间不允许）（7.6.11可用在limitation）（同样的还有GWR，可使分析更完整？）
 
 # 5. Reflections (Conclusions) (1-3 Paragraphs)
 
